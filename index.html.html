@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Evoluções Funcionais</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 1rem;
+        }
+
+        input, select {
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            width: 100%;
+            max-width: 300px;
+            margin: 20px auto;
+            display: block;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .results-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .result-card {
+            background: #f7fafc;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 5px solid #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .result-card.vertical {
+            border-left-color: #48bb78;
+        }
+
+        .result-card.horizontal {
+            border-left-color: #4299e1;
+        }
+
+        .result-card h3 {
+            color: #2d3748;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .result-card .date {
+            font-size: 1.1rem;
+            color: #4a5568;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .result-card .info {
+            font-size: 0.9rem;
+            color: #718096;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .course-period {
+            background: #ebf8ff;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 2px dashed #4299e1;
+        }
+
+        .course-period h3 {
+            color: #2b6cb0;
+            margin-bottom: 10px;
+        }
+
+        .course-period p {
+            color: #4a5568;
+            margin-bottom: 5px;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        .legend-color.vertical {
+            background-color: #48bb78;
+        }
+
+        .legend-color.horizontal {
+            background-color: #4299e1;
+        }
+
+        .error-message {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                padding: 20px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1>📈 Simulador de Evoluções Funcionais</h1>
+            
+            <div class="error-message" id="errorMessage"></div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="admissionDate">📅 Data de Admissão:</label>
+                    <input type="date" id="admissionDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastEvolutionDate">📅 Data da Última Evolução:</label>
+                    <input type="date" id="lastEvolutionDate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="lastEvolutionType">🔄 Tipo da Última Evolução:</label>
+                    <select id="lastEvolutionType" required>
+                        <option value="">Selecione...</option>
+                        <option value="vertical">Vertical</option>
+                        <option value="horizontal">Horizontal</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button onclick="simulateEvolutions()">Calcular Próximas Evoluções</button>
+        </div>
+        
+        <div class="card" id="resultsCard" style="display: none;">
+            <h2>📊 Próximas Evoluções Funcionais</h2>
+            
+            <div class="results-container" id="resultsContainer">
+                <!-- Resultados serão inseridos aqui -->
+            </div>
+            
+            <div id="coursePeriodInfo"></div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-color vertical"></div>
+                    <span>Evolução Vertical</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color horizontal"></div>
+                    <span>Evolução Horizontal</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Função para corrigir o problema de fuso horário
+        function parseDateWithoutTimezone(dateString) {
+            if (!dateString) return null;
+            
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return null;
+            
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // Mês começa em 0
+            const day = parseInt(parts[2], 10);
+            
+            return new Date(year, month, day);
+        }
+        
+        // Função para adicionar anos corretamente
+        function addYears(date, years) {
+            const result = new Date(date);
+            result.setFullYear(result.getFullYear() + years);
+            return result;
+        }
+        
+        // Função para formatar data no padrão brasileiro
+        function formatDate(date) {
+            if (!date) return 'Data inválida';
+            
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return `${day}/${month}/${year}`;
+        }
+        
+        function simulateEvolutions() {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.style.display = 'none';
+            
+            // Coletar dados de entrada usando a função corrigida
+            const admissionInput = document.getElementById('admissionDate').value;
+            const lastEvolutionInput = document.getElementById('lastEvolutionDate').value;
+            const lastEvolutionType = document.getElementById('lastEvolutionType').value;
+            
+            const admissionDate = parseDateWithoutTimezone(admissionInput);
+            const lastEvolutionDate = parseDateWithoutTimezone(lastEvolutionInput);
+            
+            // Validações
+            if (!admissionDate || !lastEvolutionDate || !lastEvolutionType) {
+                showError('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            if (admissionDate > lastEvolutionDate) {
+                showError('A data da última evolução não pode ser anterior à data de admissão.');
+                return;
+            }
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (admissionDate > today) {
+                showError('A data de admissão não pode ser futura.');
+                return;
+            }
+            
+            // Calcular intervalo baseado na data de admissão
+            const cutOffDate = new Date(2012, 11, 18); // 18/12/2012 (mês 11 = dezembro)
+            const intervalYears = admissionDate <= cutOffDate ? 2 : 3;
+            
+            // Array para armazenar as próximas evoluções
+            const evolutions = [];
+            let nextEvolutionDate = new Date(lastEvolutionDate);
+            let nextEvolutionType = lastEvolutionType === 'vertical' ? 'horizontal' : 'vertical';
+            
+            // Gerar as próximas 4 evoluções
+            for (let i = 0; i < 4; i++) {
+                // Adicionar intervalo
+                nextEvolutionDate = addYears(nextEvolutionDate, intervalYears);
+                
+                evolutions.push({
+                    type: nextEvolutionType,
+                    date: new Date(nextEvolutionDate),
+                    description: nextEvolutionType === 'vertical' ? 'Promoção' : 'Progressão',
+                    interval: intervalYears
+                });
+                
+                // Alternar tipo para próxima evolução
+                nextEvolutionType = nextEvolutionType === 'vertical' ? 'horizontal' : 'vertical';
+            }
+            
+            // Exibir resultados
+            displayResults(evolutions);
+            
+            // Exibir informações sobre cursos para evoluções verticais
+            displayCoursePeriods(evolutions);
+            
+            // Mostrar card de resultados
+            document.getElementById('resultsCard').style.display = 'block';
+            
+            // Rolar para os resultados
+            document.getElementById('resultsCard').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function displayResults(evolutions) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+            
+            evolutions.forEach((evolution, index) => {
+                const card = document.createElement('div');
+                card.className = `result-card ${evolution.type}`;
+                
+                const evolutionNumber = index + 1;
+                const icon = evolution.type === 'vertical' ? '⬆️' : '➡️';
+                const typeText = evolution.type === 'vertical' ? 'Vertical (Promoção)' : 'Horizontal (Progressão)';
+                
+                card.innerHTML = `
+                    <h3>${icon} ${evolutionNumber}ª Evolução - ${typeText}</h3>
+                    <div class="date">📅 Data Prevista: ${formatDate(evolution.date)}</div>
+                    <div class="date">📅 Ano: ${evolution.date.getFullYear()}</div>
+                    <div class="info">Intervalo: ${evolution.interval} anos desde a evolução anterior</div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function displayCoursePeriods(evolutions) {
+            const verticalEvolutions = evolutions.filter(e => e.type === 'vertical');
+            
+            if (verticalEvolutions.length === 0) {
+                document.getElementById('coursePeriodInfo').innerHTML = '';
+                return;
+            }
+            
+            let html = '<div class="course-period">';
+            html += '<h3>📚 Período de Cursos para Evoluções Verticais</h3>';
+            html += '<p>Os cursos para evolução vertical têm validade de 6 anos anteriores à data da evolução.</p>';
+            html += '<p><strong>Importante:</strong> Os cursos devem ser realizados dentro deste período.</p>';
+            
+            verticalEvolutions.forEach((evolution, index) => {
+                const validFrom = addYears(evolution.date, -6);
+                
+                html += `
+                    <br>
+                    <p><strong>${index + 1}ª Evolução Vertical (Prevista para ${formatDate(evolution.date)}):</strong></p>
+                    <p>• Período válido para cursos: <strong>${formatDate(validFrom)}</strong> até <strong>${formatDate(evolution.date)}</strong></p>
+                    <p>• Cursos realizados antes de ${formatDate(validFrom)} não serão considerados</p>
+                `;
+            });
+            
+            html += '</div>';
+            document.getElementById('coursePeriodInfo').innerHTML = html;
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Rolar para o topo para mostrar o erro
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        // Preencher datas padrão para facilitar testes
+        window.onload = function() {
+            const today = new Date();
+            const threeYearsAgo = new Date(today.getFullYear() - 3, today.getMonth(), today.getDate());
+            const fiveYearsAgo = new Date(today.getFullYear() - 5, today.getMonth(), today.getDate());
+            
+            // Formatando as datas para o input type="date"
+            document.getElementById('admissionDate').value = formatDateForInput(fiveYearsAgo);
+            document.getElementById('lastEvolutionDate').value = formatDateForInput(threeYearsAgo);
+        }
+        
+        function formatDateForInput(date) {
+            const year = date.getFullYear();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const day = date.getDate().toString().padStart(2, '0');
+            
+            return `${year}-${month}-${day}`;
+        }
+    </script>
+</body>
+</html>
