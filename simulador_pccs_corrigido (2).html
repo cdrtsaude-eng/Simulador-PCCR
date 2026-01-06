@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Simulador de Evoluções Funcionais</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+    min-height:100vh;
+    padding:20px;
+}
+.container{max-width:1200px;margin:auto;}
+.card{
+    background:#fff;
+    border-radius:15px;
+    box-shadow:0 20px 40px rgba(0,0,0,.1);
+    padding:40px;
+    margin-bottom:30px;
+}
+h1,h2{text-align:center;color:#333;}
+h1{font-size:2.2rem;margin-bottom:30px;}
+h2{font-size:1.6rem;margin-bottom:20px;}
+
+.form-grid{display:flex;flex-wrap:wrap;gap:25px;}
+.form-group{flex:1 1 300px;display:flex;flex-direction:column;}
+label{font-weight:600;margin-bottom:8px;color:#4a5568;}
+input,select{
+    padding:12px;
+    border-radius:8px;
+    border:2px solid #e2e8f0;
+    font-size:1rem;
+}
+
+button{
+    background:linear-gradient(135deg,#667eea,#764ba2);
+    color:#fff;border:none;
+    padding:15px;font-size:1.1rem;
+    border-radius:8px;
+    margin:30px auto 0;
+    cursor:pointer;
+    max-width:320px;width:100%;display:block;
+}
+
+.results-container{display:flex;flex-wrap:wrap;gap:20px;}
+.result-card{
+    flex:1 1 250px;
+    background:#f7fafc;
+    padding:20px;
+    border-radius:10px;
+    border-left:5px solid #667eea;
+}
+.result-card.vertical{border-left-color:#48bb78;}
+.result-card.horizontal{border-left-color:#4299e1;}
+
+.course-period{
+    background:#ebf8ff;
+    border-radius:10px;
+    padding:20px;
+    margin-top:30px;
+    border:2px dashed #4299e1;
+}
+
+.error-message{
+    display:none;
+    background:#fed7d7;
+    color:#c53030;
+    padding:15px;
+    border-radius:8px;
+    text-align:center;
+    margin-bottom:20px;
+}
+
+@media(max-width:768px){
+    .card{padding:20px;}
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="card">
+<h1>Simulador de Evoluções Funcionais</h1>
+<div id="errorMessage" class="error-message"></div>
+
+<div class="form-grid">
+    <div class="form-group">
+        <label>Data de Admissão</label>
+        <input type="date" id="admissionDate">
+    </div>
+    <div class="form-group">
+        <label>Data da Última Evolução</label>
+        <input type="date" id="lastEvolutionDate">
+    </div>
+    <div class="form-group">
+        <label>Tipo da Última Evolução</label>
+        <select id="lastEvolutionType">
+            <option value="">Selecione</option>
+            <option value="vertical">Vertical</option>
+            <option value="horizontal">Horizontal</option>
+        </select>
+    </div>
+</div>
+
+<button onclick="simulateEvolutions()">Calcular Próximas Evoluções</button>
+</div>
+
+<div class="card" id="resultsCard" style="display:none;">
+<h2>Próximas Evoluções Funcionais</h2>
+<div id="resultsContainer" class="results-container"></div>
+<div id="coursePeriodInfo"></div>
+</div>
+
+</div>
+
+<script>
+function parseDateWithoutTimezone(v){
+    if(!v) return null;
+    const p=v.split("-");
+    return new Date(p[0],p[1]-1,p[2]);
+}
+function addYears(d,y){
+    const r=new Date(d);
+    r.setFullYear(r.getFullYear()+y);
+    return r;
+}
+function formatDate(d){
+    const dd=String(d.getDate()).padStart(2,"0");
+    const mm=String(d.getMonth()+1).padStart(2,"0");
+    return dd+"/"+mm+"/"+d.getFullYear();
+}
+function showError(m){
+    const e=document.getElementById("errorMessage");
+    e.innerText=m;
+    e.style.display="block";
+    window.scrollTo(0,0);
+}
+
+function simulateEvolutions(){
+    document.getElementById("errorMessage").style.display="none";
+
+    const admission=parseDateWithoutTimezone(admissionDate.value);
+    const last=parseDateWithoutTimezone(lastEvolutionDate.value);
+    const type=lastEvolutionType.value;
+
+    if(!admission||!last||!type) return showError("Preencha todos os campos.");
+    if(admission>last) return showError("A data da última evolução não pode ser anterior à admissão.");
+
+    const cutOff=new Date(2012,11,18);
+    const interval=admission<=cutOff?2:3;
+
+    let nextDate=new Date(last);
+    let nextType=type==="vertical"?"horizontal":"vertical";
+    const evol=[];
+
+    for(let i=0;i<4;i++){
+        nextDate=addYears(nextDate,interval);
+        evol.push({type:nextType,date:new Date(nextDate)});
+        nextType=nextType==="vertical"?"horizontal":"vertical";
+    }
+
+    displayResults(evol,interval);
+    displayCoursePeriods(evol);
+
+    document.getElementById("resultsCard").style.display="block";
+    document.getElementById("resultsCard").scrollIntoView();
+}
+
+function displayResults(evol,interval){
+    const c=document.getElementById("resultsContainer");
+    c.innerHTML="";
+    evol.forEach((e,i)=>{
+        const d=document.createElement("div");
+        d.className="result-card "+e.type;
+        d.innerHTML=`
+        <strong>${i+1}ª Evolução (${e.type==="vertical"?"Vertical":"Horizontal"})</strong><br>
+        Data prevista: ${formatDate(e.date)}<br>
+        Intervalo: ${interval} anos
+        `;
+        c.appendChild(d);
+    });
+}
+
+function displayCoursePeriods(evol){
+    const verticals=evol.filter(e=>e.type==="vertical");
+    if(verticals.length===0){
+        document.getElementById("coursePeriodInfo").innerHTML="";
+        return;
+    }
+    let html='<div class="course-period">';
+    html+='<h3>Período de Cursos para Evoluções Verticais</h3>';
+    html+='<p>Cursos válidos até 6 anos anteriores à data da evolução.</p>';
+
+    verticals.forEach((e,i)=>{
+        const start=addYears(e.date,-6);
+        html+=`<p><strong>${i+1}ª Evolução Vertical:</strong><br>
+        Período válido: ${formatDate(start)} até ${formatDate(e.date)}</p>`;
+    });
+
+    html+='</div>';
+    document.getElementById("coursePeriodInfo").innerHTML=html;
+}
+</script>
+
+</body>
+</html>
